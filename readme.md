@@ -3,7 +3,7 @@
 From this repository you will find out how to use Neo4j and Meteor within [Neo4jreactivity](https://github.com/VeliovGroup/ostrio-Neo4jreactivity) atmospherejs.com package
 
 ## Issues
-Currently we met some weird issues within downloaded, not cloned, version of repository, when meteor installs older versions of packages on first `meteor` command run. If you met any issues like `method "..." not found` or `"..." package removed`, just run (inside `Meteor-Leaderboard-Neo4j` folder):
+Currently we met some weird issues within downloaded, not cloned, version of repository, (and within fresh install of Meteor) when meteor uses older versions of packages on first `meteor` command run. If you met any issues like `method "..." not found` or `"..." package removed`, just run (inside `Meteor-Leaderboard-Neo4j` folder):
 ```bash
 meteor remove ostrio:neo4jreactivity
 meteor add ostrio:neo4jreactivity
