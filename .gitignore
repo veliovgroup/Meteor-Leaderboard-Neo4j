@@ -16,16 +16,44 @@ coverage
 # Grunt intermediate storage (http://gruntjs.com/creating-plugins#storing-task-files)
 .grunt
 .idea
-**/.meteor
 *.lock
 
 # Compiled binary addons (http://nodejs.org/api/addons.html)
 build/Release
+**/packages
 
 # Dependency directory
 # Deployed apps should consider commenting this line out:
 # see https://npmjs.org/doc/faq.html#Should-I-check-my-node_modules-folder-into-git
 node_modules
+npm-debug.log
+*.scssc
+.sass-cache/*
+*-ck.js
+providers_secret.js
+
+codekit-config.json
+
+config.rb
+
+deploy.sh
+
+.demeteorized
+
+dump/
+dump/*
+
+settings.json
+settings.json.not-used
+
+scratch
+
+.deploy
+.deploy/*
+### Meteor template
+.meteor/local
+.meteor/meteorite
+mup.json
 
 # OSX.gitignore
 # https://github.com/github/gitignore/blob/master/Global/OSX.gitignore
