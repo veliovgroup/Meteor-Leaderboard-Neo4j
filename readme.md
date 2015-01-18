@@ -10,53 +10,57 @@ meteor add ostrio:neo4jreactivity
 ```
 
 ### Install
-#### Neo4j
+###### Neo4j
 Pick up Neo4j version from [Official Neo4j Website](http://neo4j.com/download/)
 After download - unzip and place into root folder of your user (name it neo4j), then in Terminal run:
 ```bash
 cd ~/neo4j #downloaded and replaced folder
 bin/neo4j start
 ```
+* Note: __Neo4j database should be running before Meteor__ *
 
-#### Node.js
+###### Node.js
 Pick up version for your system on [Official Node.js Website](http://nodejs.org/download/)
 Follow installer instructions
 
-#### Meteor
+###### Meteor
 Run this in Terminal:
 ```bash
 curl https://install.meteor.com/ | sh
 ```
 
-#### Neo4j NPM Package
+###### Neo4j NPM Package
 To install Neo4j NPM Package, run this in Terminal:
 ```bash
 npm -g install neo4j
 ```
 
-#### Clone this repository
+###### Clone this repository
 Run in Terminal:
 ```bash
 git clone git@github.com:VeliovGroup/Meteor-Leaderboard-Neo4j.git
 cd Meteor-Leaderboard-Neo4j
 ```
 
-#### Running meteor
+###### Running meteor
 Run a line below in Terminal, inside ```Meteor-Leaderboard-Neo4j``` folder:
 ```bash
 meteor
 ```
 
-In your browser go to [localhost:3000](http://localhost:3000/)
-To see Neo4j browser, go to [localhost:7474](http://localhost:7474/)
+###### What next
+ - In your browser go to [localhost:3000](http://localhost:3000/)
+ - To see Neo4j browser, go to [localhost:7474](http://localhost:7474/)
 
 
 ------
 
 
-## How we rewrite Leaderboard example to be used with Neo4j
-#Meteor’s Leaderboard example app driven by neo4j database
+### How we rewrite Leaderboard example to be used with Neo4j
+#### Meteor’s Leaderboard example app, driven by Neo4j database
 
+##### Prepare dev stage:
+###### Create example app 
 First of all download Meteor and Neo4j onto your working machine, then run:
 ```shell
 $ meteor create --example leaderboard
@@ -64,19 +68,26 @@ $ cd leaderboard
 $ meteor
 ```
 
-and inside of neo4j directory:
-
+###### Run Neo4j DB
+Run inside of Neo4j directory:
 ```shell
 $ bin/neo4j start
 ```
 
-### Installing neo4j Meteor’s drivers
+###### Installing Neo4j Meteor’s drivers
 ```shell
 $ meteor add ostrio:neo4jreactivity
 ```
 
-### Understanding the package
-From now we’re have three variables, first:
+-----
+
+##### Understanding the package
+After installing `ostrio:neo4jreactivity` package - we have next variables:
+ - `Neo4j;`
+ - `N4JDB;`
+ - `neo4j;`
+
+###### var Neo4j;
 ```javascript
 /* 
  * Server only
@@ -104,8 +115,7 @@ graph.listen(function(query, opts){
 });
 ```
 
-Second:
-
+###### var neo4j;
 ```javascript
 /* Both (Client and Server)
  * @object
@@ -180,8 +190,7 @@ neo4j.call(‘GetAllUsers’, null, function(error, data){
 });
 ```
 
-third:
-
+###### var N4JDB;
 ```javascript
 /* 
  * Server only
@@ -193,22 +202,23 @@ N4JDB;
 N4JDB.query(‘CREATE (a:User {_id: ”123”})’);
 ```
 
-Okay, I’ve described most used function at ostrio:neo4jdriver and ostrio:neo4jreactivity packages, next we will understand what we need to change, to move on neo4j DB.
+Okay, I’ve described most used function at ostrio:neo4jdriver and ostrio:neo4jreactivity packages, next we will understand what we need to change, to move on Neo4j DB.
 
 
-# Writing the code
+----
 
-## Checking the “Leaderboard” sources
+##### Writing the code
+
+###### Understanding the “Leaderboard” sources
 
  - When server starts, it’s creates multiply Players (will will handle it with `N4JDB.query` method)
  - In template’s helper `players` we have all players ordered by score (we will handle it with isomorphic `neo4j.query`)
  - In template’s helper `selectedName` we have player name gotten via `findOne` method (we will handle `selectedName` and `selectedPlayer` via Sessions, which will be set on `click` inside `Template.player.events`)
- - Incrementation of score implemented via `update` method (for security - we will use neo4j `methods` and `call`)
+ - Incrementation of score implemented via `update` method (for security - we will use `neo4j.methods` and `neo4j.call`)
 
 Let’s put our hands on it
 
-## Moving to neo4j
-
+###### Moving to Neo4j:
 At first let’s create neo4j config file `lib/neo4j.js`:
 ```javascript
 /* Allow client query execution */
