@@ -57,7 +57,10 @@ meteor
 
 
 ### How we rewrite Leaderboard example to be used with Neo4j
+In article below you will understand the basics of `ostrio:neo4jreactivity` and `ostrio:neo4driver` packages. How to translate queries and other code from MongoDB to Neo4j. How to write basic query in Neo4j. How to use reactivity in Neo4j.
+
 #### Meteor’s Leaderboard example app, driven by Neo4j database
+We've decided to take very basic example application at Meteor - "Leaderboard" and move it from MongoDB to Neo4j.
 
 ##### Prepare dev stage:
 ###### Create example app 
@@ -81,7 +84,7 @@ $ meteor add ostrio:neo4jreactivity
 
 -----
 
-##### Understanding the package
+##### Understanding the packages
 After installing `ostrio:neo4jreactivity` package - we have next variables:
  - `Neo4j;`
  - `N4JDB;`
@@ -101,17 +104,19 @@ After installing `ostrio:neo4jreactivity` package - we have next variables:
  * @description Comes from ostrio:neo4jdriver package 
  * Run it to create connection to database
  */
-var graph = new Neo4j();
+var N4JDB = new Neo4j();
+```
 
-/* It has multiply functions: */
+Newly created object has next functions, you will use:
+```javascript
 /* @name query */
-graph.query(‘MATCH (n:User) RETURN n’, opts /* A map of parameters for the Cypher query */, function(err, data){
-    Session.set(‘allUsers’, data);
+N4JDB.query('MATCH (n:User) RETURN n', opts /* A map of parameters for the Cypher query */, function(err, data){
+    Session.set('allUsers', data);
 });
 
 /* @name listen */
-graph.listen(function(query, opts){
-    console.log(‘Incoming request to neo4j database detected!’);
+N4JDB.listen(function(query, opts){
+    console.log('Incoming request to neo4j database detected!');
 });
 ```
 
@@ -125,8 +130,11 @@ graph.listen(function(query, opts){
  */
 neo4j;
 neo4j.allowClientQuery = true; /* Allow/deny client query executions */
+neo4j.connectionURL = null; /* Set custom connection URL to Neo4j DB, Note: It’s better to store url in environment variable, 'NEO4J_URL' or 'GRAPHENEDB_URL' - so it will be automatically picked up by the driver */
+```
 
-/* It has multiply functions, you will use: */
+`neo4j` object has multiply functions, you will use:
+```javascript
 /* @namespace neo4j.set
  * @name allow
  * @param rules {array} - Array of Cypher operators to be allowed in app
@@ -150,14 +158,14 @@ neo4j.set.deny(rules /* array of strings */);
  *                              So to get data for query like:
  *                              'MATCH (a:User) RETURN a', you will need to: 
  *                              data.a
- * @param settings {object}   - {returnCursor: boolean} if set to true, returns Mongo.cursor 
+ * @param settings {object}   - {returnCursor: boolean} if set to true, returns Mongo\Cursor 
  * @description Isomorphic Cypher query call
- * @returns Mongo.cursor [REACTIVE DATA SOURCE] 
+ * @returns Mongo\Cursor or ReactiveVar [REACTIVE DATA SOURCE] 
  *
- * @note Please keep in mind what on client it returns ReactiveVar, but on server it returns just data, see difference in usege at example below
+ * @note Please keep in mind what on client it returns ReactiveVar, but on server it returns just data, see difference in usage at example below
  *
  */
-allUsers = neo4j.query(‘MATCH (n:User) RETURN n’);
+allUsers = neo4j.query('MATCH (n:User) RETURN n');
 
 if(Meteor.isClient && allUsers.get()){
     var users = allUsers.get().a;
@@ -173,8 +181,8 @@ if(Meteor.isServer && allUsers){
  * @description Create server methods to send query to neo4j database
  */
 neo4j.methods({
-   ‘GetAllUsers’: function(){
-      return ‘MATCH (n:User) RETURN n’
+   'GetAllUsers': function(){
+      return 'MATCH (n:User) RETURN n';
    }
 });
 
@@ -185,8 +193,8 @@ neo4j.methods({
  * @description Call for server method registered via neo4j.methods() method, 
  *              returns error, data via callback.
  */
-neo4j.call(‘GetAllUsers’, null, function(error, data){
-   Session.set(‘AllUsers’, data.get());
+neo4j.call('GetAllUsers', null, function(error, data){
+   Session.set('AllUsers', data.get());
 });
 ```
 
@@ -194,26 +202,27 @@ neo4j.call(‘GetAllUsers’, null, function(error, data){
 ```javascript
 /* 
  * Server only
- * @description Current GraphDatabase connection object
+ * @description Current GraphDatabase connection object, basically created from 'new Neo4j()''
  */
 N4JDB;
 
 /* You may run queries with no returns on server with it: */
-N4JDB.query(‘CREATE (a:User {_id: ”123”})’);
+N4JDB.query('CREATE (a:User {_id: ”123”})');
 ```
 
-Okay, I’ve described most used function at ostrio:neo4jdriver and ostrio:neo4jreactivity packages, next we will understand what we need to change, to move on Neo4j DB.
+Okay, we’ve understood most used functions at `ostrio:neo4jdriver` and `ostrio:neo4jreactivity` packages, next we will understand what we need to change, to move on Neo4j DB.
 
 
 ----
+
 
 ##### Writing the code
 
 ###### Understanding the “Leaderboard” sources
 
- - When server starts, it’s creates multiply Players (will will handle it with `N4JDB.query` method)
- - In template’s helper `players` we have all players ordered by score (we will handle it with isomorphic `neo4j.query`)
- - In template’s helper `selectedName` we have player name gotten via `findOne` method (we will handle `selectedName` and `selectedPlayer` via Sessions, which will be set on `click` inside `Template.player.events`)
+ - When server start, it’s creates Players (we'll handle it with `N4JDB.query` method)
+ - In template’s helper `players` - all players ordered by score (we will handle it with isomorphic `neo4j.query`)
+ - In template’s helper `selectedName` - player name comes via `findOne` method (we will handle `selectedName` and `selectedPlayer` via Sessions, which will be set on `click` inside `Template.player.events`)
  - Incrementation of score implemented via `update` method (for security - we will use `neo4j.methods` and `neo4j.call`)
 
 Let’s put our hands on it
@@ -284,7 +293,7 @@ neo4j.call('incrementScore', {playerId: Session.get('selectedPlayer'), increment
 ```
 
 To return Players list on client side, we will use Session:
-```
+```javascript
 Session.setDefault('players', []);
 
 /* Wrap code into `Tracker.autorun` callback to let it be updated when changes comes from other clients: */
