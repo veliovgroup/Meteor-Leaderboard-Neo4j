@@ -118,7 +118,7 @@ body {
   vertical-align: middle;
 }
 
-.details .inc {
+.details .inc, .button{
   border-radius: 3em;
   border: #eb5f3a 1px solid;
   background: transparent;
@@ -147,6 +147,28 @@ body {
   color: #aaa;
   line-height: 2.25rem;
   text-align: center;
+}
+
+.input{
+  border-radius: 3em;
+  border: #eb5f3a 1px solid;
+  display: inline-block;
+  font-family: 'Source Sans Pro' ,'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-size: 1rem;
+  line-height: 1;
+  margin: 0;
+  outline: none;
+  padding: 10px 30px;
+}
+
+.input.addPlayer{
+  width: 300px;
+}
+
+.removePlayer{
+  float: left;
+  cursor: pointer;
+  margin: 24px 0px 0px 0px;
 }
 
 @media (max-width: 500px) {
