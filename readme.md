@@ -188,7 +188,7 @@ Meteor.neo4j.methods({
  *              returns error, data via callback.
  */
 Meteor.neo4j.call('GetAllUsers', null, function(error, data){
-   Session.set('AllUsers', data;
+   Session.set('AllUsers', data);
 });
 ```
 
@@ -200,7 +200,7 @@ Meteor.neo4j.call('GetAllUsers', null, function(error, data){
  */
 Meteor.N4JDB;
 
-/* You may run queries with no returns on server with it: */
+/* You may run queries with no returns on server with N4JDB: */
 Meteor.N4JDB.query('CREATE (a:User {_id: ”123”})');
 ```
 
@@ -229,9 +229,7 @@ Meteor.neo4j.allowClientQuery = true;
 /* Custom URL to Neo4j should be here */
 Meteor.neo4j.connectionURL = 'http://...';
 /* But deny all writing actions on client */
-if(Meteor.isClient){
-    Meteor.neo4j.set.deny(neo4j.rules.write);
-}
+Meteor.neo4j.set.deny(neo4j.rules.write);
 ```
 
 Let’s move to `leaderboard.js` file and get rid of this line:
@@ -244,7 +242,7 @@ This is isomorphic code, so we have all data we need inside `Players` variable o
 
 To check qty of players we use:
 ```javascript
-(Players.get() && Players.get().a.length === 0)
+(!Players.get() || Players.get().a && Players.get().a.length === 0)
 
 /* Instead of:
  * Players.find().count()
