@@ -71,6 +71,8 @@ if (Meteor.isClient) {
 // On server startup, create some players if the database is empty.
 if (Meteor.isServer) {
 
+  // Meteor.neo4j.connectionURL = 'http://neo4j:1234@localhost:7474'
+
   Meteor.neo4j.publish('players', function(){
     return 'MATCH (a:Player) RETURN a ORDER BY a.score DESC';
   }, function(){
