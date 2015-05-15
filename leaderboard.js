@@ -12,7 +12,7 @@ var Players = Meteor.neo4j.collection('players');
 if (Meteor.isClient) {
 
   Tracker.autorun(function(){
-    Meteor.neo4j.subscribe('players', null, 'a');
+    Meteor.neo4j.subscribe('players', 'allPlayers', null, 'a');
   });
 
   Template.leaderboard.helpers({
@@ -71,9 +71,9 @@ if (Meteor.isClient) {
 // On server startup, create some players if the database is empty.
 if (Meteor.isServer) {
 
-  // Meteor.neo4j.connectionURL = 'http://neo4j:1234@localhost:7474'
+  Meteor.neo4j.connectionURL = 'http://neo4j:1234@localhost:7474'
 
-  Meteor.neo4j.publish('players', function(){
+  Meteor.neo4j.publish('players', 'allPlayers', function(){
     return 'MATCH (a:Player) RETURN a ORDER BY a.score DESC';
   }, function(){
     /* onSubscribe callback */
