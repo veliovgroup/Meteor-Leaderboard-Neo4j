@@ -12,12 +12,16 @@ var Players = Meteor.neo4j.collection('players');
 if (Meteor.isClient) {
 
   Tracker.autorun(function(){
-    Meteor.neo4j.subscribe('players', null, 'a');
+    Players.subscribe('allPlayers', null, 'node');
   });
 
   Template.leaderboard.helpers({
     players: function () {
-      return Players.find({});
+      return Players.find({'metadata.labels': 'Player'}, {
+        sort:{
+          score: -1
+        }
+      });
     },
     selectedName: function () {
       var player = Players.findOne({_id: Session.get('selectedPlayer')});
@@ -32,16 +36,23 @@ if (Meteor.isClient) {
 
   Template.leaderboard.events({
     'click .inc': function () {
-      Meteor.neo4j.call('incrementScore', {playerId: Session.get('selectedPlayer'), incrementBy: 5});
+      Players.update({
+        _id: Session.get('selectedPlayer')
+      },{
+        '$inc': {
+          score: 1
+        }
+      });
     }
   });
 
   Template.addPlayer.events({
     'click #addPlayer': function () {
       if($('#newPlayerName').val()){
-        Meteor.neo4j.call('addPlayer', {
-          userName: $('#newPlayerName').val(), 
-          userId: String.generate()
+        Players.insert({
+          name: $('#newPlayerName').val(),
+          score: 0,
+          __labels: ':Player'
         });
         $('#newPlayerName').val('');
       }
@@ -60,9 +71,9 @@ if (Meteor.isClient) {
     'click': function () {
       Session.set('selectedPlayer', this._id);
     },
-    'click #removePlayer': function (e, template) {
+    'click #removePlayer': function (e) {
       $(e.target).parent().remove();
-      Meteor.neo4j.call('removePlayer', {playerId: this._id});
+      Players.remove({_id: this._id});
       Session.set('selectedPlayer', false);
     }
   });
@@ -71,13 +82,11 @@ if (Meteor.isClient) {
 // On server startup, create some players if the database is empty.
 if (Meteor.isServer) {
 
-  // Meteor.neo4j.connectionURL = 'http://neo4j:1234@localhost:7474'
-
-  Meteor.neo4j.publish('players', function(){
-    return 'MATCH (a:Player) RETURN a ORDER BY a.score DESC';
+  Players.publish('allPlayers', function(){
+    return 'MATCH (node:Player) RETURN node ORDER BY node.score DESC';
   }, function(){
     /* onSubscribe callback */
-    if (!Players.findOne({})) {
+    if (Players.find({}).count() <= 0) {
       var names = [ 
                     'Ada Lovelace', 
                     'Grace Hopper', 
@@ -87,34 +96,27 @@ if (Meteor.isServer) {
                     'Claude Shannon', 
                     'Ostr.io'
                   ];
-
+      var players = [];
       _.each(names, function (name) {
-
-        Meteor.N4JDB.query('CREATE (a:Player {_id: {_id}, name: {userName}, score: {userScore}})', {
-
-            _id: String.generate(),
-            userName: name, 
-            userScore: Math.floor(Random.fraction() * 10) * 5
-
-          }, function(err){
-            if(err){
-              throw err;
-            }
-          }
-        );
+        players.push({
+          name: name, 
+          score: Math.floor(Random.fraction() * 10) * 5,
+          __labels: ':Player'
+        });
       });
-    }
-  });
+      Players.insert(players);
 
-  Meteor.neo4j.methods({
-    'incrementScore': function(){
-      return 'MATCH (a:Player {_id:{playerId}}) SET a.score = a.score + toInt({incrementBy})';
-    },
-    'addPlayer': function(){
-      return 'CREATE (a:Player {_id:{userId}, name: {userName}, score: 0})';
-    },
-    'removePlayer': function(){
-      return 'MATCH (a:Player {_id:{playerId}}) DELETE a';
+      // Meteor.neo4j.query('CREATE (a:Player {players})', {players: players}, function(err){
+      //   if(err){
+      //     throw err;
+      //   }
+      // });
+
+      // Meteor.N4JDB.query('CREATE (a:Player {players})', {players: players}, function(err){
+      //   if(err){
+      //     throw err;
+      //   }
+      // });
     }
   });
 }
