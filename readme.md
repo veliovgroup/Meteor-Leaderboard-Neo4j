@@ -99,22 +99,21 @@ Meteor.neo4j.connectionURL = 'http://user:password@localhost:7474';
 Meteor.neo4j.set.deny(neo4j.rules.write);
 ```
 
-Let’s move to `leaderboard.js` file and change this line:
+Let’s move to `leaderboard.js` file and change this line [*Isomorphic*]:
 ```javascript
 /* Players = new Mongo.Collection("players"); */
-/* To get all players: */
 var Players = Meteor.neo4j.collection('players');
 ```
 This is isomorphic code, so we have all data we need inside `Players` variable on both - server and client sides.
 
-First, we need to publish some data to client:
+First, we need to publish some data to client [*Client*]:
 ```javascript
 Players.publish('allPlayers', function(){
   return 'MATCH (node:Player) RETURN node ORDER BY node.score DESC';
 });
 ```
 
-And check if we have users or not, of not - create new users:
+And check if we have users or not, if not - create new users [*Server*]:
 ```javascript
 Players.publish('allPlayers', function(){
   return 'MATCH (node:Player) RETURN node ORDER BY node.score DESC';
@@ -138,7 +137,7 @@ Players.publish('allPlayers', function(){
 });
 ```
 
-To generate Players we can, all methods below is reactive and works almost in same way, the `players` variable is array of object {*[Object]*}:
+To generate Players we can use several methods, all methods below is reactive and works almost in same way, the `players` variable is array of object {*[Object]*}:
 ```javascript
 Players.insert(players);
 /* or */
@@ -147,7 +146,7 @@ Meteor.neo4j.query('CREATE (a:Player {players})', {players: players});
 Meteor.N4JDB.query('CREATE (a:Player {players})', {players: players});
 ```
 
-To increment ‘score’, we will use standard `update` method as we use in mongo:
+To increment ‘score’, we will use standard `update` method as we use in mongo [*Client*]:
 ```javascript
 Players.update({
   _id: Session.get('selectedPlayer')
@@ -158,7 +157,7 @@ Players.update({
 });
 ```
 
-To create new user - we only will add the `__label` property:
+To create new user - we only will add the `__label` property [*Client*]:
 ```javascript
 Players.insert({
   name: $('#newPlayerName').val(),
@@ -167,7 +166,7 @@ Players.insert({
 });
 ```
 
-To return Players list on client side, we will find all nodes with `Player` label and sort them:
+To return Players list on client side, we will find all nodes with `Player` label and sort them [*Client*]:
 ```javascript
 Template.leaderboard.helpers({
   players: function () {
