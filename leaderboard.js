@@ -17,7 +17,7 @@ if (Meteor.isClient) {
 
   Template.leaderboard.helpers({
     players: function () {
-      return Players.find({}, {
+      return Players.find({'metadata.labels': 'Player'}, {
         sort:{
           score: -1
         }
@@ -86,7 +86,7 @@ if (Meteor.isServer) {
     return 'MATCH (node:Player) RETURN node ORDER BY node.score DESC';
   }, function(){
     /* onSubscribe callback */
-    if (!Players.findOne({})) {
+    if (Players.find({}).count() <= 0) {
       var names = [ 
                     'Ada Lovelace', 
                     'Grace Hopper', 
@@ -105,7 +105,7 @@ if (Meteor.isServer) {
         });
       });
       Players.insert(players);
-      
+
       // Meteor.neo4j.query('CREATE (a:Player {players})', {players: players}, function(err){
       //   if(err){
       //     throw err;

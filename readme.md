@@ -2,13 +2,6 @@
 
 From this repository you will find out how to use Neo4j and Meteor within [Neo4jreactivity](https://github.com/VeliovGroup/ostrio-Neo4jreactivity) atmospherejs.com package
 
-## Issues
-Currently we met some weird issues within downloaded, not cloned, version of repository, (and within fresh install of Meteor) when meteor uses older versions of packages on first `meteor` command run. If you met any issues like `method "..." not found` or `"..." package removed`, just run (inside `Meteor-Leaderboard-Neo4j` folder):
-```bash
-meteor remove ostrio:neo4jreactivity
-meteor add ostrio:neo4jreactivity
-```
-
 ### Install
 ###### Neo4j
 Pick up Neo4j version from [Official Neo4j Website](http://neo4j.com/download/)
@@ -82,142 +75,15 @@ $ bin/neo4j start
 $ meteor add ostrio:neo4jreactivity
 ```
 
------
-
-##### Understanding the packages
-After installing `ostrio:neo4jreactivity` package - we have next variables:
- - `Meteor.Neo4j;`
- - `Meteor.N4JDB;`
- - `Meteor.neo4j;`
-
-###### var Neo4j;
-```javascript
-/* 
- * Server only
- * @class
- * @name Neo4j
- * @param url {string} - url to Neo4j database
- * Note: It’s better to store url in environment 
- * variable, 'NEO4J_URL' or 'GRAPHENEDB_URL' - 
- * so it will be automatically picked up by our driver
- * 
- * @description Comes from ostrio:neo4jdriver package 
- * Run it to create connection to database
- */
-Meteor.N4JDB = new Neo4j();
-```
-
-Newly created object has next functions, you will use:
-```javascript
-/* @name query */
-Meteor.N4JDB.query('MATCH (n:User) RETURN n', opts /* A map of parameters for the Cypher query */, function(err, data){
-    Session.set('allUsers', data);
-});
-
-/* @name listen */
-Meteor.N4JDB.listen(function(query, opts){
-    console.log('Incoming request to neo4j database detected!');
-});
-```
-
-###### var neo4j;
-```javascript
-/* Both (Client and Server)
- * @object
- * @name neo4j
- * @description Application wide object neo4j
- *
- */
-Meteor.neo4j;
-Meteor.neo4j.allowClientQuery = true; /* Allow/deny client query executions */
-Meteor.neo4j.connectionURL = null; /* Set custom connection URL to Neo4j DB, Note: It’s better to store url in environment variable, 'NEO4J_URL' or 'GRAPHENEDB_URL' - so it will be automatically picked up by the driver */
-```
-
-`neo4j` object has multiple functions, you will use:
-```javascript
-/* @namespace neo4j.set
- * @name allow
- * @param rules {array} - Array of Cypher operators to be allowed in app
- */
-Meteor.neo4j.set.allow(rules /* array of strings */);
-
-/* @namespace neo4j.set
- * @name deny
- * @param rules {array} - Array of Cypher operators to be forbidden in app
- */
-Meteor.neo4j.set.deny(rules /* array of strings */);
-
-
-/*
- * @function
- * @namespace neo4j
- * @name query
- * @param query {string}      - Cypher query
- * @param opts {object}       - A map of parameters for the Cypher query
- * @param callback {function} - Callback function(error, data){...}. Where is data is [REACTIVE DATA SOURCE]
- *                              So to get data for query like:
- *                              'MATCH (a:User) RETURN a', you will need to: 
- *                              data.a
- * @param settings {object}   - {returnCursor: boolean} if set to true, returns Mongo\Cursor 
- * @description Isomorphic Cypher query call
- * @returns Mongo\Cursor or ReactiveVar [REACTIVE DATA SOURCE] 
- *
- * @note Please keep in mind what on client it returns ReactiveVar, but on server it returns just data, see difference in usage at example below
- *
- */
-allUsers = Meteor.neo4j.query('MATCH (n:User) RETURN n');
-var users = allUsers.get();
-
-/*
- * Server only
- * @name methods
- * @param methods {object} - Object of methods, like: { methodName: function(){ return 'MATCH (a:User {name: {userName}}) RETURN a' } }
- * @description Create server methods to send query to neo4j database
- */
-Meteor.neo4j.methods({
-   'GetAllUsers': function(){
-      return 'MATCH (n:User) RETURN n';
-   }
-});
-
-
-/*
- * Client only
- * @name call
- * @description Call for server method registered via neo4j.methods() method, 
- *              returns error, data via callback.
- */
-Meteor.neo4j.call('GetAllUsers', null, function(error, data){
-   Session.set('AllUsers', data);
-});
-```
-
-###### var N4JDB;
-```javascript
-/* 
- * Server only
- * @description Current GraphDatabase connection object, basically created from 'new Neo4j()''
- */
-Meteor.N4JDB;
-
-/* You may run queries with no returns on server with N4JDB: */
-Meteor.N4JDB.query('CREATE (a:User {_id: ”123”})');
-```
-
-Okay, we’ve understood most used functions at `ostrio:neo4jdriver` and `ostrio:neo4jreactivity` packages, next we will understand what we need to change, to move on Neo4j DB.
-
-
-----
-
+-------
 
 ##### Writing the code
-
 ###### Understanding the “Leaderboard” sources
 
- - When server start, it’s creates Players (we'll handle it with `N4JDB.query` method)
- - In template’s helper `players` - all players ordered by score (we will handle it with isomorphic `neo4j.query`)
- - In template’s helper `selectedName` - player name comes via `findOne` method (we will handle `selectedName` and `selectedPlayer` via Sessions, which will be set on `click` inside `Template.player.events`)
- - Incrementation of score implemented via `update` method (for security - we will use `neo4j.methods` and `neo4j.call`)
+ - When server start, it is creates Players
+ - In template’s helper `players` - all players ordered by score
+ - In template’s helper `selectedName` - player name comes via `findOne` method
+ - Incrementation of score implemented via `update` method
 
 Let’s put our hands on it
 
@@ -227,67 +93,89 @@ At first let’s create neo4j config file `lib/neo4j.js`:
 /* Allow client query execution */
 Meteor.neo4j.allowClientQuery = true;
 /* Custom URL to Neo4j should be here */
-Meteor.neo4j.connectionURL = 'http://...';
+/* CHANGE THIS LINE IN ACCORDING TO YOUR NEO4J SETTINGS */
+Meteor.neo4j.connectionURL = 'http://user:password@localhost:7474';
 /* But deny all writing actions on client */
 Meteor.neo4j.set.deny(neo4j.rules.write);
 ```
 
-Let’s move to `leaderboard.js` file and get rid of this line:
+Let’s move to `leaderboard.js` file and change this line:
 ```javascript
-Players = new Mongo.Collection("players");
+/* Players = new Mongo.Collection("players"); */
 /* To get all players: */
-Players = neo4j.query('MATCH (a:Player) RETURN a ORDER BY a.score DESC');
+var Players = Meteor.neo4j.collection('players');
 ```
-This is isomorphic code, so we have all data we need inside `Players` variable on both - server and client sides. From now for reactivity use `Players.get()` method, and for cursor you have `Players.cursor` property
+This is isomorphic code, so we have all data we need inside `Players` variable on both - server and client sides.
 
-To check qty of players we use:
+First, we need to publish some data to client:
 ```javascript
-(!Players.get() || Players.get().a && Players.get().a.length === 0)
-
-/* Instead of:
- * Players.find().count()
- */
-```
-
-To generate Players we do:
-```javascript
-Meteor.N4JDB.query('CREATE (a:Player {name: {userName}}, {score: {userScore}})', {
-   _id: String.generate(), /* See ‘/lib/String.js’ file */
-   userName: name, 
-   userScore: Math.floor(Random.fraction() * 10) * 5
+Players.publish('allPlayers', function(){
+  return 'MATCH (node:Player) RETURN node ORDER BY node.score DESC';
 });
-/* Instead of:
- * Players.insert({
- *   name: name,
- *   score: Math.floor(Random.fraction() * 10) * 5
- * });
- */
 ```
 
-To increment ‘score’, we create server method:
+And check if we have users or not, of not - create new users:
 ```javascript
-if (Meteor.isServer) {
- Meteor.neo4j.methods({
-    'incrementScore': function(){
-      return 'MATCH (a:Player {_id:{playerId}}) SET a.score = a.score + toInt({incrementBy})';
-    }
-  });
-}
+Players.publish('allPlayers', function(){
+  return 'MATCH (node:Player) RETURN node ORDER BY node.score DESC';
+}, function(){
+  if (Players.find({}).count() <= 0) {
+    var names = [ 'Ada Lovelace', 
+                  'Grace Hopper', 
+                  'Marie Curie',
+                  'Carl Friedrich Gauss', 
+                  'Nikola Tesla', 
+                  'Claude Shannon'];
+    var players = [];
+    _.each(names, function (name) {
+      players.push({
+        name: name, 
+        score: Math.floor(Random.fraction() * 10) * 5,
+        __labels: ':Player' /* Assign Cypher label to all nodes */
+      });
+    });
+    Players.insert(players);
+});
 ```
 
-and replace helper:
+To generate Players we can, all methods below is reactive and works almost in same way, the `players` variable is array of object {*[Object]*}:
 ```javascript
-Meteor.neo4j.call('incrementScore', {playerId: Session.get('selectedPlayer'), incrementBy: 5});
-/* Instead of:
- * Players.update(Session.get("selectedPlayer"), {$inc: {score: 5}});
- */
+Players.insert(players);
+/* or */
+Meteor.neo4j.query('CREATE (a:Player {players})', {players: players});
+/* or */
+Meteor.N4JDB.query('CREATE (a:Player {players})', {players: players});
 ```
 
-To return Players list on client side, with `get()` method:
+To increment ‘score’, we will use standard `update` method as we use in mongo:
+```javascript
+Players.update({
+  _id: Session.get('selectedPlayer')
+},{
+  '$inc': {
+    score: 1
+  }
+});
+```
+
+To create new user - we only will add the `__label` property:
+```javascript
+Players.insert({
+  name: $('#newPlayerName').val(),
+  score: 0,
+  __labels: ':Player'
+});
+```
+
+To return Players list on client side, we will find all nodes with `Player` label and sort them:
 ```javascript
 Template.leaderboard.helpers({
   players: function () {
-    return Players.get();
+    Players.find({'metadata.labels': 'Player'}, {
+      sort:{
+        score: -1
+      }
+    });
   },
   ...
 });
