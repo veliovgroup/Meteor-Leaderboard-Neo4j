@@ -137,7 +137,7 @@ Players.publish('allPlayers', function(){
 });
 ```
 
-To generate Players we can use several methods, all methods below is reactive and works almost in same way, the `players` variable is array of object {*[Object]*}:
+To generate Players we can use several methods, all methods below is reactive and works almost in same way, the `players` variable is array of objects {*[Object]*}:
 ```javascript
 Players.insert(players);
 /* or */
