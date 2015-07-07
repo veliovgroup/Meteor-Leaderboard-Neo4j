@@ -40,7 +40,7 @@ if (Meteor.isClient) {
         _id: Session.get('selectedPlayer')
       },{
         '$inc': {
-          score: 1
+          score: 5
         }
       });
     }
