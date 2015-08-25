@@ -150,6 +150,7 @@ body {
 }
 
 .input{
+  width: 100%;
   border-radius: 3em;
   border: #eb5f3a 1px solid;
   display: inline-block;

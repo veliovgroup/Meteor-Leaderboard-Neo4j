@@ -2,6 +2,10 @@
 
 From this repository you will find out how to use Neo4j and Meteor within [Neo4jreactivity](https://github.com/VeliovGroup/ostrio-Neo4jreactivity) atmospherejs.com package
 
+Additional functionality:
+ - User remove
+ - User search
+
 ### Install
 ###### Neo4j
 Pick up Neo4j version from [Official Neo4j Website](http://neo4j.com/download/)
