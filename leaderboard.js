@@ -7,17 +7,25 @@
 /*global Tracker:false */
 /*global Random:false */
 
+
 var Players = Meteor.neo4j.collection('players');
 
 if (Meteor.isClient) {
+  Session.setDefault('searchString', ".");
 
   Tracker.autorun(function(){
-    Players.subscribe('allPlayers', null, 'node');
+    Players.subscribe('allPlayers', {search: Session.get('searchString')}, 'node');
   });
 
   Template.leaderboard.helpers({
     players: function () {
-      return Players.find({'metadata.labels': 'Player'}, {
+      return Players.find({
+        'metadata.labels': 'Player',
+        name: {
+          '$regex': Session.get('searchString')+'*.',
+          '$options': 'i'
+        }
+      }, {
         sort:{
           score: -1
         }
@@ -43,6 +51,14 @@ if (Meteor.isClient) {
           score: 5
         }
       });
+    },
+    'keyup #search': function(e) {
+      searchString = e.currentTarget.value;
+      if(searchString.length > 0){
+        Session.set('searchString', (searchString+'').replace(/[.?*+^$[\]\\(){}|-]/g, "\\$&"));
+      }else{
+        Session.set('searchString', ".");
+      }
     }
   });
 
@@ -83,7 +99,10 @@ if (Meteor.isClient) {
 if (Meteor.isServer) {
 
   Players.publish('allPlayers', function(){
-    return 'MATCH (node:Player) RETURN node ORDER BY node.score DESC';
+    if(this.search){
+      this.search = "(?i)(" + this.search + ").*";
+      return "MATCH (node:Player) WHERE node.name =~ {search} RETURN node ORDER BY node.score DESC";
+    }
   }, function(){
     /* onSubscribe callback */
     if (Players.find({}).count() <= 0) {
@@ -97,13 +116,16 @@ if (Meteor.isServer) {
                     'Ostr.io'
                   ];
       var players = [];
-      _.each(names, function (name) {
+
+      for (i = 0, len = names.length; i < len; i++) {
+        name = names[i];
         players.push({
           name: name, 
           score: Math.floor(Random.fraction() * 10) * 5,
           __labels: ':Player'
         });
-      });
+      }
+
       Players.insert(players);
 
       // Meteor.neo4j.query('CREATE (a:Player {players})', {players: players}, function(err){
